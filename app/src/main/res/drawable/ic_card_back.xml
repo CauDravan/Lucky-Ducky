@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mặt sau của lá bài (card back) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="112dp"
+    android:viewportWidth="80"
+    android:viewportHeight="112">
+
+    <!-- Card background -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M8,0 L72,0 A8,8 0,0 1,80 8 L80,104 A8,8 0,0 1,72 112 L8,112 A8,8 0,0 1,0 104 L0,8 A8,8 0,0 1,8 0 Z" />
+
+    <!-- Border -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M10,6 L70,6 A4,4 0,0 1,74 10 L74,102 A4,4 0,0 1,70 106 L10,106 A4,4 0,0 1,6 102 L6,10 A4,4 0,0 1,10 6 Z" />
+
+    <!-- Pattern - Diagonal lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.3"
+        android:pathData="M20,10 L60,90 M30,10 L70,90 M10,20 L50,100 M40,10 L74,80" />
+
+    <!-- Pattern - Diagonal lines (opposite) -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.3"
+        android:pathData="M60,10 L20,90 M50,10 L10,90 M70,20 L30,100 M40,10 L6,80" />
+
+    <!-- Center diamond -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.2"
+        android:pathData="M40,35 L50,56 L40,77 L30,56 Z" />
+
+    <!-- Lucky Ducky text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.5"
+        android:pathData="M25,50 L26,50 L26,58 L25,58 Z M28,50 L30,50 L28,58 L26.5,58 Z" />
+
+</vector>

@@ -2,32 +2,53 @@ package com.project.luckyducky.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.splashscreen.SplashScreen;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.project.luckyducky.R;
 import com.project.luckyducky.main.MainActivity;
 
 public class SplashActivity extends AppCompatActivity {
+
+    private static final long SPLASH_DELAY = 2000; // 2 giây
+    private AuthManager authManager;
+
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        // Install system splash screen (AndroidX)
-        SplashScreen.installSplashScreen(this);
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_splash);
 
-        // Check current user
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        authManager = AuthManager.getInstance(this);
 
-        if (user != null) {
-            // User already signed in -> go to Main
-            startActivity(new Intent(this, MainActivity.class));
+        // Delay 2 giây rồi check login status
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            checkLoginStatus();
+        }, SPLASH_DELAY);
+    }
+
+    private void checkLoginStatus() {
+        if (authManager.isUserLoggedIn()) {
+            // Đã login → vào MainActivity
+            navigateToMain();
         } else {
-            // Not signed in -> go to Login
-            startActivity(new Intent(this, LoginActivity.class));
+            // Chưa login → vào LoginActivity
+            navigateToLogin();
         }
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void navigateToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
         finish();
     }
 }

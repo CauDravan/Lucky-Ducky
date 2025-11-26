@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,10 +15,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LuckyDucky">
 
-        <!-- SplashActivity làm màn hình khởi động -->
+        <!-- SplashActivity -->
         <activity
             android:name=".auth.SplashActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.LuckyDucky.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -25,12 +29,24 @@
         <!-- LoginActivity -->
         <activity
             android:name=".auth.LoginActivity"
-            android:exported="true" />
+            android:exported="false"
+            android:theme="@style/Theme.LuckyDucky.NoActionBar" />
 
-        <!-- MainActivity (màn hình chính) -->
+        <!-- MainActivity -->
         <activity
             android:name=".main.MainActivity"
-            android:exported="true" />
+            android:exported="false" />
+
+        <!-- Game Activity -->
+        <activity
+            android:name=".game.GameActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Result Activity -->
+        <activity
+            android:name=".game.ResultActivity"
+            android:exported="false" />
 
     </application>
 
