@@ -14,7 +14,7 @@
 
     <!-- Empty State -->
     <LinearLayout
-        android:id="@+id/tvEmptyState"
+        android:id="@+id/llEmptyState"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"

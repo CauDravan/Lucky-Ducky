@@ -33,7 +33,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryAdapter
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
-    private TextView tvEmptyState;
+    private TextView llEmptyState;
 
     private HistoryAdapter adapter;
     private List<GameHistory> historyList;
@@ -69,7 +69,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryAdapter
     private void initViews() {
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
-        tvEmptyState = findViewById(R.id.tvEmptyState);
+        llEmptyState = findViewById(R.id.llEmptyState);
     }
 
     private void setupBackPressHandler() {
@@ -121,10 +121,10 @@ public class HistoryActivity extends AppCompatActivity implements HistoryAdapter
 
     private void updateEmptyState() {
         if (historyList.isEmpty()) {
-            tvEmptyState.setVisibility(View.VISIBLE);
+            llEmptyState.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
-            tvEmptyState.setVisibility(View.GONE);
+            llEmptyState.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
     }
@@ -132,7 +132,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryAdapter
     private void showLoading(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
-        tvEmptyState.setVisibility(View.GONE);
+        llEmptyState.setVisibility(View.GONE);
     }
 
     @Override

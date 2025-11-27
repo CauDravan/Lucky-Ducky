@@ -124,7 +124,7 @@ public class GameActivity extends AppCompatActivity {
 
     private void startNewGame() {
         // Draw a random card
-        drawnCard = cardManager.drawCard();
+        drawnCard = cardManager.drawnRandomCard();
 
         // Initialize game history
         String userId = authManager.getCurrentUserId();

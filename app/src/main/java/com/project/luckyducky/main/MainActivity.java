@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload stats khi quay lại từ GameActivity
+        // Reload stats when come back to GameActivity
         if (authManager.getCurrentUserId() != null) {
             loadStats();
         }
