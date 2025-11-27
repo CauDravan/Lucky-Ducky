@@ -59,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
                         handleSignInResult(data);
                     } else {
                         hideLoading();
-                        Toast.makeText(this, "Đăng nhập bị hủy", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Sign in failed", Toast.LENGTH_SHORT).show();
                     }
                 }
         );

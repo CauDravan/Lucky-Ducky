@@ -48,6 +48,16 @@
             android:name=".game.ResultActivity"
             android:exported="false" />
 
+        <!-- Stats Activity -->
+        <activity
+            android:name=".game.StatsActivity"
+            android:exported="false" />
+
+        <!-- History Activity -->
+        <activity
+            android:name=".game.HistoryActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

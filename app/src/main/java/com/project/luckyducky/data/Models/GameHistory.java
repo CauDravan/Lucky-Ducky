@@ -1,16 +1,19 @@
 package com.project.luckyducky.data.Models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameHistory {
+public class GameHistory implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String userId;
     private long timestamp;
     private Card drawnCard;
     private List<QuestionResult> results;
 
-    public static class QuestionResult {
+    public static class QuestionResult implements Serializable {
         private int questionNumber;
         private String question;
         private String userAnswer;

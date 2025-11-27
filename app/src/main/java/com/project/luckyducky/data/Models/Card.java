@@ -1,6 +1,8 @@
 package com.project.luckyducky.data.Models;
 
 public class Card {
+    private static final long serialVersionUID = 1L;
+
     private Suit suit;
     private Rank rank;
 

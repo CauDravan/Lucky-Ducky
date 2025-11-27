@@ -94,12 +94,12 @@ public class AuthManager {
                 });
     }
 
-    // Check xem user đã sign chưa
+    // Check if user sign yet
     public boolean isUserLoggedIn() {
         return mAuth.getCurrentUser() != null;
     }
 
-    // Lấy user hiện tại
+    // Currently user
     public User getCurrentUser() {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         if (firebaseUser != null) {
@@ -131,7 +131,7 @@ public class AuthManager {
         );
     }
 
-    // Lấy UID của user hiện tại
+    // Take currently user UID
     public String getCurrentUserId() {
         FirebaseUser user = mAuth.getCurrentUser();
         return user != null ? user.getUid() : null;

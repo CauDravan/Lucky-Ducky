@@ -12,7 +12,7 @@ import com.project.luckyducky.main.MainActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private static final long SPLASH_DELAY = 2000; // 2 giây
+    private static final long SPLASH_DELAY = 2000; // 2 second
     private AuthManager authManager;
 
     @Override

@@ -27,11 +27,9 @@
         android:pathData="M50,40 L35,40 C32,40 30,42 30,44 C30,46 32,48 35,48 L50,48 Z" />
 
     <!-- Eye -->
-    <circle
+    <path
         android:fillColor="#212121"
-        android:cx="58"
-        android:cy="38"
-        android:radius="3" />
+        android:pathData="M58,35 a3,3 0 1,0 0,6 a3,3 0 1,0 0,-6" />
 
     <!-- Playing card (held by duck) -->
     <path
