@@ -3,7 +3,6 @@
     <string name="app_name">Lucky Ducky</string>
 
     <!-- Google Sign In -->
-    <!-- TODO: Replace with your actual web client ID from Firebase Console -->
     <string name="default_web_client_id">597560311296-usk87aetp6pt7ngomua7dp5snopr3tdn.apps.googleusercontent.com</string>
 
     <!-- Game -->
