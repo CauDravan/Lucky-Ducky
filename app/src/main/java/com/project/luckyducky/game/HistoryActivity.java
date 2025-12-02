@@ -1,206 +1,206 @@
 package com.project.luckyducky.game;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import androidx.cardview.widget.CardView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.project.luckyducky.R;
-import com.project.luckyducky.auth.AuthManager;
-import com.project.luckyducky.data.Adapter.HistoryAdapter;
 import com.project.luckyducky.data.FirestoreService;
 import com.project.luckyducky.data.Models.GameHistory;
-import com.project.luckyducky.game.ResultActivity;
-import com.project.luckyducky.utils.Constants;
-
-import java.util.ArrayList;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-public class HistoryActivity extends AppCompatActivity implements HistoryAdapter.OnHistoryClickListener {
+public class HistoryActivity extends com.project.luckyducky.BaseActivity {
 
-    private AuthManager authManager;
+    private static final int MAX_HISTORY_ITEMS = 20;
+
     private FirestoreService firestoreService;
 
-    private RecyclerView recyclerView;
+    private LinearLayout llHistoryList;
     private ProgressBar progressBar;
-    private TextView llEmptyState;
-
-    private HistoryAdapter adapter;
-    private List<GameHistory> historyList;
+    private TextView tvEmptyMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        // Setup action bar
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("History");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-        // Initialize managers
-        authManager = AuthManager.getInstance(this);
-        firestoreService = FirestoreService.getInstance();
-
-        // Initialize views
-        initViews();
-
-        // Setup RecyclerView
-        setupRecyclerView();
-
-        // Load history
-        loadHistory();
-
-        // Setup back press
-        setupBackPressHandler();
+        initializeViews();
+        firestoreService = new FirestoreService();
+        loadGameHistory();
     }
 
-    private void initViews() {
-        recyclerView = findViewById(R.id.recyclerView);
+    private void initializeViews() {
+        llHistoryList = findViewById(R.id.llHistoryList);
         progressBar = findViewById(R.id.progressBar);
-        llEmptyState = findViewById(R.id.llEmptyState);
+        tvEmptyMessage = findViewById(R.id.tvEmptyMessage);
+
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
-    private void setupBackPressHandler() {
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                finish();
-            }
-        });
-    }
-
-    private void setupRecyclerView() {
-        historyList = new ArrayList<>();
-        adapter = new HistoryAdapter(historyList, this);
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
-    }
-
-    private void loadHistory() {
-        showLoading(true);
-
-        String userId = authManager.getCurrentUserId();
-        if (userId == null) {
-            Toast.makeText(this, "Not found user", Toast.LENGTH_SHORT).show();
+    private void loadGameHistory() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        firestoreService.getGameHistory(userId, new FirestoreService.OnDataLoadListener<List<GameHistory>>() {
-            @Override
-            public void onSuccess(List<GameHistory> data) {
-                historyList = data;
-                adapter.updateData(historyList);
-                showLoading(false);
-                updateEmptyState();
-            }
+        progressBar.setVisibility(View.VISIBLE);
+        llHistoryList.setVisibility(View.GONE);
+        tvEmptyMessage.setVisibility(View.GONE);
 
-            @Override
-            public void onFailure(String error) {
-                Toast.makeText(HistoryActivity.this,
-                        "Error load history: " + error,
-                        Toast.LENGTH_SHORT).show();
-                showLoading(false);
-                updateEmptyState();
-            }
-        });
+        // Load only last 20 games
+        firestoreService.getGameHistory(user.getUid(), MAX_HISTORY_ITEMS,
+                new FirestoreService.OnHistoryLoadListener() {
+                    @Override
+                    public void onHistoryLoaded(List<GameHistory> historyList) {
+                        progressBar.setVisibility(View.GONE);
+
+                        if (historyList.isEmpty()) {
+                            tvEmptyMessage.setVisibility(View.VISIBLE);
+                        } else {
+                            llHistoryList.setVisibility(View.VISIBLE);
+                            displayHistory(historyList);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(HistoryActivity.this,
+                                "Failed to load history: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    private void updateEmptyState() {
-        if (historyList.isEmpty()) {
-            llEmptyState.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
+    private void displayHistory(List<GameHistory> historyList) {
+        llHistoryList.removeAllViews();
+
+        for (GameHistory history : historyList) {
+            addHistoryItemView(history);
+        }
+    }
+
+    private void addHistoryItemView(GameHistory history) {
+        View itemView = LayoutInflater.from(this)
+                .inflate(R.layout.item_game_history, llHistoryList, false);
+
+        TextView tvDate = itemView.findViewById(R.id.tvDate);
+        TextView tvScore = itemView.findViewById(R.id.tvScore);
+        TextView tvAccuracy = itemView.findViewById(R.id.tvAccuracy);
+        TextView tvCorrectWrong = itemView.findViewById(R.id.tvCorrectWrong);
+        CardView cardView = itemView.findViewById(R.id.cardHistory);
+
+        // Format date - handle null timestamp
+        String dateStr;
+        if (history.getTimestamp() != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
+            dateStr = sdf.format(history.getTimestamp().toDate());
         } else {
-            llEmptyState.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
+            dateStr = "Unknown date";
         }
+        tvDate.setText(dateStr);
+
+        // Display score
+        tvScore.setText(history.getCorrectAnswers() + "/" + history.getTotalQuestions());
+
+        // Calculate and display accuracy
+        double accuracy = history.getTotalQuestions() > 0 ?
+                (double) history.getCorrectAnswers() / history.getTotalQuestions() * 100 : 0;
+        DecimalFormat df = new DecimalFormat("#.#");
+        tvAccuracy.setText(df.format(accuracy) + "%");
+
+        // Display correct/wrong
+        tvCorrectWrong.setText("✓ " + history.getCorrectAnswers() +
+                "  ✗ " + history.getWrongAnswers());
+
+        // Set card background based on accuracy
+        int colorResId;
+        if (accuracy >= 75) {
+            colorResId = R.color.excellent_stat;
+        } else if (accuracy >= 50) {
+            colorResId = R.color.good_stat;
+        } else {
+            colorResId = R.color.poor_stat;
+        }
+        cardView.setCardBackgroundColor(getResources().getColor(colorResId));
+
+        // Click to view details
+        itemView.setOnClickListener(v -> showHistoryDetails(history));
+
+        llHistoryList.addView(itemView);
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        recyclerView.setVisibility(show ? View.GONE : View.VISIBLE);
-        llEmptyState.setVisibility(View.GONE);
-    }
+    private void showHistoryDetails(GameHistory history) {
+        // Create dialog showing detailed results
+        androidx.appcompat.app.AlertDialog.Builder builder =
+                new androidx.appcompat.app.AlertDialog.Builder(this);
 
-    @Override
-    public void onHistoryClick(GameHistory history) {
-        // Navigate to ResultActivity to show details
-        Intent intent = new Intent(this, ResultActivity.class);
-        intent.putExtra(Constants.EXTRA_GAME_RESULT, history);
-        startActivity(intent);
-    }
+        View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_history_details, null);
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_history, menu);
-        return true;
-    }
+        LinearLayout llDetails = dialogView.findViewById(R.id.llQuestionDetails);
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_clear_history) {
-            showClearHistoryDialog();
-            return true;
+        List<GameHistory.QuestionResult> results = history.getQuestionResults();
+        if (results != null) {
+            for (GameHistory.QuestionResult result : results) {
+                addQuestionDetailView(llDetails, result);
+            }
         }
 
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void showClearHistoryDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Delete History")
-                .setMessage("Are you sure want to delete history?\nThis action can't be undo")
-                .setPositiveButton("Delete", (dialog, which) -> clearHistory())
-                .setNegativeButton("Cancel", null)
+        builder.setView(dialogView)
+                .setTitle("Game Details")
+                .setPositiveButton("Close", null)
                 .show();
     }
 
-    private void clearHistory() {
-        showLoading(true);
+    private void addQuestionDetailView(LinearLayout container,
+                                       GameHistory.QuestionResult result) {
+        View itemView = LayoutInflater.from(this)
+                .inflate(R.layout.item_history_detail, container, false);
 
-        String userId = authManager.getCurrentUserId();
-        if (userId == null) return;
+        TextView tvQuestion = itemView.findViewById(R.id.tvQuestionDetail);
+        TextView tvAnswer = itemView.findViewById(R.id.tvAnswerDetail);
+        TextView tvCard = itemView.findViewById(R.id.tvCardDetail);
+        TextView tvResult = itemView.findViewById(R.id.tvResultDetail);
 
-        firestoreService.clearAllHistory(userId, new FirestoreService.OnCompleteListener() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(HistoryActivity.this,
-                        "Deleted history",
-                        Toast.LENGTH_SHORT).show();
-                historyList.clear();
-                adapter.updateData(historyList);
-                showLoading(false);
-                updateEmptyState();
-            }
+        tvQuestion.setText("Q" + result.getQuestionNumber() + ": " +
+                formatQuestionType(result.getQuestionType()));
+        tvAnswer.setText("Your answer: " + result.getUserAnswer());
+        tvCard.setText("Card drawn: " + result.getCardDrawn());
 
-            @Override
-            public void onFailure(String error) {
-                Toast.makeText(HistoryActivity.this,
-                        "Error delete history: " + error,
-                        Toast.LENGTH_SHORT).show();
-                showLoading(false);
-            }
-        });
+        String resultText = result.isCorrect() ? "✓ Correct" : "✗ Wrong";
+        int colorResId = result.isCorrect() ?
+                R.color.correct_answer : R.color.wrong_answer;
+
+        tvResult.setText(resultText);
+        tvResult.setTextColor(getResources().getColor(colorResId));
+
+        container.addView(itemView);
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
+    private String formatQuestionType(String type) {
+        switch (type) {
+            case "color": return "Red or Black";
+            case "higher_lower": return "Higher or Lower";
+            case "inside_outside": return "Inside or Outside";
+            case "suit": return "Suit";
+            case "odd_even": return "Odd or Even";
+            case "face_number": return "Face or Number";
+            case "rank_prediction": return "Rank Prediction";
+            default: return type;
+        }
     }
 }

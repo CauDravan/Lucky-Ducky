@@ -1,95 +1,151 @@
 package com.project.luckyducky.data.Models;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.ServerTimestamp;
 import java.util.List;
 
-public class GameHistory implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+public class GameHistory {
     private String id;
     private String userId;
-    private long timestamp;
-    private Card drawnCard;
-    private List<QuestionResult> results;
 
-    public static class QuestionResult implements Serializable {
-        private int questionNumber;
-        private String question;
-        private String userAnswer;
-        private String correctAnswer;
-        private boolean isCorrect;
+    @ServerTimestamp
+    private Timestamp timestamp;
 
-        public QuestionResult() {}
+    private int totalQuestions;
+    private int correctAnswers;
+    private int wrongAnswers;
+    private List<QuestionResult> questionResults;
 
-        public QuestionResult(int questionNumber, String question, String userAnswer, String correctAnswer, boolean isCorrect) {
-            this.questionNumber = questionNumber;
-            this.question = question;
-            this.userAnswer = userAnswer;
-            this.correctAnswer = correctAnswer;
-            this.isCorrect = isCorrect;
-        }
-
-        // get-set
-        public int getQuestionNumber() {return questionNumber;}
-        public void setQuestionNumber(int questionNumber) {this.questionNumber = questionNumber;}
-
-        public String getQuestion() {return question;}
-        public void setQuestion(String question) {this.question = question;}
-
-        public String getUserAnswer() {return userAnswer;}
-        public void setUserAnswer(String userAnswer) {this.userAnswer = userAnswer;}
-
-        public String getCorrectAnswer() {return correctAnswer;}
-        public void setCorrectAnswer(String correctAnswer) {this.correctAnswer = correctAnswer;}
-
-        public boolean isCorrect() {return isCorrect;}
-        public void setCorrect(boolean correct) {isCorrect = correct;}
-    }
-
-    // constructor firestore
     public GameHistory() {
-        this.results = new ArrayList<>();
+        // Required empty constructor for Firestore
     }
 
-    public GameHistory(String userId, Card drawnCard) {
+    public GameHistory(String userId, int totalQuestions, int correctAnswers,
+                       int wrongAnswers, List<QuestionResult> questionResults) {
         this.userId = userId;
-        this.drawnCard = drawnCard;
-        this.timestamp = System.currentTimeMillis();
-        this.results = new ArrayList<>();
+        this.totalQuestions = totalQuestions;
+        this.correctAnswers = correctAnswers;
+        this.wrongAnswers = wrongAnswers;
+        this.questionResults = questionResults;
+        // timestamp will be set by @ServerTimestamp
     }
 
-    public void addResult(QuestionResult result) {
-        results.add(result);
+    // Getters and Setters
+    public String getId() {
+        return id;
     }
 
-    public int getCorrectCount() {
-        int count = 0;
-        for (QuestionResult result : results) {
-            if (result.isCorrect()) {
-                count++;
-            }
-        }
-        return count;
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 
     public int getTotalQuestions() {
-        return results.size();
+        return totalQuestions;
     }
 
-    // get-set
-    public String getId() {return id;}
-    public void setId(String id) {this.id = id;}
+    public void setTotalQuestions(int totalQuestions) {
+        this.totalQuestions = totalQuestions;
+    }
 
-    public String getUserId() {return userId;}
-    public void setUserId(String userId) {this.userId = userId;}
+    public int getCorrectAnswers() {
+        return correctAnswers;
+    }
 
-    public long getTimestamp() {return timestamp;}
-    public void setTimestamp(long timestamp) {this.timestamp = timestamp;}
+    public void setCorrectAnswers(int correctAnswers) {
+        this.correctAnswers = correctAnswers;
+    }
 
-    public Card getDrawnCard() {return drawnCard;}
-    public void setDrawnCard(Card drawnCard) {this.drawnCard = drawnCard;}
+    public int getWrongAnswers() {
+        return wrongAnswers;
+    }
 
-    public List<QuestionResult> getResults() {return results;}
-    public void setResults(List<QuestionResult> results) {this.results = results;}
+    public void setWrongAnswers(int wrongAnswers) {
+        this.wrongAnswers = wrongAnswers;
+    }
+
+    public List<QuestionResult> getQuestionResults() {
+        return questionResults;
+    }
+
+    public void setQuestionResults(List<QuestionResult> questionResults) {
+        this.questionResults = questionResults;
+    }
+
+    public static class QuestionResult {
+        private int questionNumber;
+        private String questionType; // "color", "higher_lower", "inside_outside", "suit", "odd_even"
+        private String userAnswer;
+        private boolean correct;
+        private String cardDrawn; // e.g., "3 of hearts"
+
+        public QuestionResult() {
+            // Required empty constructor
+        }
+
+        public QuestionResult(int questionNumber, String questionType,
+                              String userAnswer, boolean correct, String cardDrawn) {
+            this.questionNumber = questionNumber;
+            this.questionType = questionType;
+            this.userAnswer = userAnswer;
+            this.correct = correct;
+            this.cardDrawn = cardDrawn;
+        }
+
+        // Getters and Setters
+        public int getQuestionNumber() {
+            return questionNumber;
+        }
+
+        public void setQuestionNumber(int questionNumber) {
+            this.questionNumber = questionNumber;
+        }
+
+        public String getQuestionType() {
+            return questionType;
+        }
+
+        public void setQuestionType(String questionType) {
+            this.questionType = questionType;
+        }
+
+        public String getUserAnswer() {
+            return userAnswer;
+        }
+
+        public void setUserAnswer(String userAnswer) {
+            this.userAnswer = userAnswer;
+        }
+
+        public boolean isCorrect() {
+            return correct;
+        }
+
+        public void setCorrect(boolean correct) {
+            this.correct = correct;
+        }
+
+        public String getCardDrawn() {
+            return cardDrawn;
+        }
+
+        public void setCardDrawn(String cardDrawn) {
+            this.cardDrawn = cardDrawn;
+        }
+    }
 }

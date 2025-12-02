@@ -1,14 +1,8 @@
 package com.project.luckyducky.auth;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
-
 import androidx.annotation.NonNull;
-
-import com.project.luckyducky.R;
-import com.project.luckyducky.data.Models.User;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -19,121 +13,171 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.project.luckyducky.R;
+import com.project.luckyducky.data.FirestoreService;
+import com.project.luckyducky.data.Models.User;
 
 public class AuthManager {
-    private static final String TAG = "AuthManager";
-    private static AuthManager instance;
 
-    private FirebaseAuth mAuth;
-    private GoogleSignInClient mGoogleSignInClient;
-    private Context context;
+    private final FirebaseAuth firebaseAuth;
+    private final GoogleSignInClient googleSignInClient;
+    private final FirestoreService firestoreService;
+    private final Activity activity;
 
-    // Callback interfaces
-    public interface AuthCallback {
-        void onSuccess(User user);
-        void onFailure(String error);
-    }
+    public static final int RC_SIGN_IN = 9001; // Deprecated - use ActivityResultLauncher instead
 
-    private AuthManager(Context context) {
-        this.context = context.getApplicationContext();
-        this.mAuth = FirebaseAuth.getInstance();
+    public AuthManager(Activity activity) {
+        this.activity = activity;
+        this.firebaseAuth = FirebaseAuth.getInstance();
+        this.firestoreService = new FirestoreService();
 
-        // Configure Google Sign-In
+        // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(context.getString(R.string.default_web_client_id))
+                .requestIdToken(activity.getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
 
-        mGoogleSignInClient = GoogleSignIn.getClient(context, gso);
+        this.googleSignInClient = GoogleSignIn.getClient(activity, gso);
     }
 
-    public static synchronized AuthManager getInstance(Context context) {
-        if (instance == null) {
-            instance = new AuthManager(context);
-        }
-        return instance;
+    // Get current user
+    public FirebaseUser getCurrentUser() {
+        return firebaseAuth.getCurrentUser();
     }
 
-    // Lấy Intent để mở Google Sign-In
-    public Intent getGoogleSignInIntent() {
-        return mGoogleSignInClient.getSignInIntent();
+    // Check if user is logged in
+    public boolean isUserLoggedIn() {
+        return getCurrentUser() != null;
     }
 
-    // Xử lý kết quả từ Google Sign-In
-    public void handleSignInResult(Intent data, AuthCallback callback) {
+    // Start Google Sign In
+    public Intent getSignInIntent() {
+        return googleSignInClient.getSignInIntent();
+    }
+
+    // Handle sign in result
+    public void handleSignInResult(Intent data, OnAuthCompleteListener listener) {
         Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
         try {
             GoogleSignInAccount account = task.getResult(ApiException.class);
             if (account != null) {
-                firebaseAuthWithGoogle(account, callback);
+                firebaseAuthWithGoogle(account, listener);
             }
         } catch (ApiException e) {
-            Log.w(TAG, "Google sign in failed", e);
-            callback.onFailure("Google Sign-In failed: " + e.getMessage());
+            listener.onFailure(e);
         }
     }
 
-    // Sign Firebase với Google credential
-    private void firebaseAuthWithGoogle(GoogleSignInAccount account, AuthCallback callback) {
-        Log.d(TAG, "firebaseAuthWithGoogle:" + account.getId());
-
+    // Firebase auth with Google
+    private void firebaseAuthWithGoogle(GoogleSignInAccount account, OnAuthCompleteListener listener) {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(task -> {
+
+        firebaseAuth.signInWithCredential(credential)
+                .addOnCompleteListener(activity, task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "signInWithCredential:success");
-                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            User user = createUserFromFirebase(firebaseUser);
-                            callback.onSuccess(user);
+                            // Check if user exists in Firestore
+                            checkAndCreateUser(firebaseUser, listener);
                         }
                     } else {
-                        Log.w(TAG, "signInWithCredential:failure", task.getException());
-                        callback.onFailure("Login failed: " + task.getException().getMessage());
+                        listener.onFailure(task.getException());
                     }
                 });
     }
 
-    // Check if user sign yet
-    public boolean isUserLoggedIn() {
-        return mAuth.getCurrentUser() != null;
-    }
+    // Check if user exists, create if not
+    private void checkAndCreateUser(FirebaseUser firebaseUser, OnAuthCompleteListener listener) {
+        firestoreService.getUser(firebaseUser.getUid(), new FirestoreService.OnUserLoadListener() {
+            @Override
+            public void onUserLoaded(User user) {
+                if (user == null) {
+                    // User doesn't exist, create new
+                    createNewUser(firebaseUser, listener);
+                } else {
+                    // User exists, update last login
+                    user.updateLastLogin();
+                    firestoreService.updateUser(user, new FirestoreService.OnCompleteListener() {
+                        @Override
+                        public void onSuccess() {
+                            listener.onSuccess(user);
+                        }
 
-    // Currently user
-    public User getCurrentUser() {
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            return createUserFromFirebase(firebaseUser);
-        }
-        return null;
-    }
+                        @Override
+                        public void onFailure(Exception e) {
+                            // Still allow login even if update fails
+                            listener.onSuccess(user);
+                        }
+                    });
+                }
+            }
 
-    // Log out
-    public void signOut(Runnable onComplete) {
-        mAuth.signOut();
-        mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
-            if (onComplete != null) {
-                onComplete.run();
+            @Override
+            public void onFailure(Exception e) {
+                // If can't check, try to create new user anyway
+                createNewUser(firebaseUser, listener);
             }
         });
     }
 
-    // Convert FirebaseUser sang User model
-    private User createUserFromFirebase(FirebaseUser firebaseUser) {
-        String photoUrl = firebaseUser.getPhotoUrl() != null ?
-                firebaseUser.getPhotoUrl().toString() : "";
-
-        return new User(
-            firebaseUser.getUid(),
-            firebaseUser.getEmail(),
-            firebaseUser.getDisplayName(),
-            photoUrl
+    // Create new user in Firestore
+    private void createNewUser(FirebaseUser firebaseUser, OnAuthCompleteListener listener) {
+        User newUser = new User(
+                firebaseUser.getUid(),
+                firebaseUser.getEmail(),
+                firebaseUser.getDisplayName(),
+                firebaseUser.getPhotoUrl() != null ? firebaseUser.getPhotoUrl().toString() : null
         );
+
+        firestoreService.createUser(newUser, new FirestoreService.OnCompleteListener() {
+            @Override
+            public void onSuccess() {
+                listener.onSuccess(newUser);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                listener.onFailure(e);
+            }
+        });
     }
 
-    // Take currently user UID
-    public String getCurrentUserId() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        return user != null ? user.getUid() : null;
+    // Update user info
+    public void updateUserInfo(User user, OnAuthCompleteListener listener) {
+        firestoreService.updateUser(user, new FirestoreService.OnCompleteListener() {
+            @Override
+            public void onSuccess() {
+                listener.onSuccess(user);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                listener.onFailure(e);
+            }
+        });
+    }
+
+    // Sign out
+    public void signOut(OnSignOutListener listener) {
+        firebaseAuth.signOut();
+        googleSignInClient.signOut()
+                .addOnCompleteListener(activity, task -> {
+                    if (task.isSuccessful()) {
+                        listener.onSignOutSuccess();
+                    } else {
+                        listener.onSignOutFailure(task.getException());
+                    }
+                });
+    }
+
+    // Listeners
+    public interface OnAuthCompleteListener {
+        void onSuccess(User user);
+        void onFailure(Exception e);
+    }
+
+    public interface OnSignOutListener {
+        void onSignOutSuccess();
+        void onSignOutFailure(Exception e);
     }
 }

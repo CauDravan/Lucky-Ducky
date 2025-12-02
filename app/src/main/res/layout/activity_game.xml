@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/main_background"
+    android:background="#1a472a"
     android:fillViewport="true">
 
     <LinearLayout
@@ -12,121 +12,167 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Progress Bar (loading) -->
-        <ProgressBar
-            android:id="@+id/progressBar"
+        <!-- Header with Score -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="@drawable/bg_card">
+
+            <TextView
+                android:id="@+id/tvQuestionNumber"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Question 1/7"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"/>
+
+            <TextView
+                android:id="@+id/tvScore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Score: 0/0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="16dp"/>
+
+            <TextView
+                android:id="@+id/tvCorrect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓ 0"
+                android:textSize="14sp"
+                android:textColor="#4CAF50"
+                android:layout_marginStart="8dp"/>
+
+            <TextView
+                android:id="@+id/tvWrong"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✗ 0"
+                android:textSize="14sp"
+                android:textColor="#F44336"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <!-- Cards Display -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="24dp">
+
+            <!-- First Card (for Q3 reference) -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="80dp"
+                android:layout_height="112dp"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
+                <ImageView
+                    android:id="@+id/ivFirstCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_card_back"/>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Previous Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="80dp"
+                android:layout_height="112dp"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp">
+
+                <ImageView
+                    android:id="@+id/ivPreviousCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_card_back"/>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Current Card (Main) -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="120dp"
+                android:layout_height="168dp"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="8dp">
+
+                <ImageView
+                    android:id="@+id/ivCurrentCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_card_back"
+                    android:background="@android:color/black"/>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Cards Remaining -->
+        <TextView
+            android:id="@+id/tvCardsRemaining"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:visibility="gone"
-            android:indeterminateTint="@color/primary" />
+            android:layout_gravity="center"
+            android:text="Cards Remaining: 52"
+            android:textSize="14sp"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="8dp"/>
 
-        <!-- Card Display -->
+        <!-- Question Text -->
         <androidx.cardview.widget.CardView
-            android:layout_width="200dp"
-            android:layout_height="280dp"
-            android:layout_gravity="center_horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             app:cardCornerRadius="12dp"
-            app:cardElevation="8dp"
-            android:layout_marginBottom="24dp">
-
-            <ImageView
-                android:id="@+id/imgCard"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_card_back"
-                android:scaleType="centerCrop"
-                android:contentDescription="Playing Card" />
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Question Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
+            android:background="@android:color/black">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvQuestion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <!-- Question Number -->
-                <TextView
-                    android:id="@+id/tvQuestionNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Câu hỏi 1/8"
-                    android:textSize="14sp"
-                    android:textColor="@color/primary"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
-
-                <!-- Question Text -->
-                <TextView
-                    android:id="@+id/tvQuestionText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Lá bài này màu đỏ hay đen?"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:layout_marginBottom="8dp" />
-
-                <!-- Hint -->
-                <TextView
-                    android:id="@+id/tvHint"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Xác suất 50/50"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_hint"
-                    android:textStyle="italic" />
-
-            </LinearLayout>
-
+                android:text="meow"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:gravity="center"
+                android:padding="16dp"/>
         </androidx.cardview.widget.CardView>
 
-        <!-- Options Card -->
-        <androidx.cardview.widget.CardView
+        <!-- Answer Buttons Container -->
+        <LinearLayout
+            android:id="@+id/llAnswerButtons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="4dp"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginTop="24dp"
+            android:padding="8dp">
 
-            <RadioGroup
-                android:id="@+id/rgOptions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+            <!-- Buttons will be added dynamically -->
+        </LinearLayout>
 
-                <!-- Options will be added dynamically -->
-
-            </RadioGroup>
-
-        </androidx.cardview.widget.CardView>
-
-        <!-- Submit Button -->
-        <Button
-            android:id="@+id/btnSubmit"
-            style="@style/PrimaryButton"
+        <!-- Game Info -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tiếp theo"
-            android:textSize="18sp"
-            android:enabled="false" />
-
-        <!-- Spacer -->
-        <View
-            android:layout_width="1dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:text="Lucky Ducky - Test Your Luck!"
+            android:textSize="12sp"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:alpha="0.7"/>
 
     </LinearLayout>
-
 </ScrollView>

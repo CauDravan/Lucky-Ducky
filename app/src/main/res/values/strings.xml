@@ -1,4 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Lucky Ducky</string>
+
+    <!-- Google Sign In -->
+    <!-- TODO: Replace with your actual web client ID from Firebase Console -->
     <string name="default_web_client_id">597560311296-usk87aetp6pt7ngomua7dp5snopr3tdn.apps.googleusercontent.com</string>
+
+    <!-- Game -->
+    <string name="game_title">Lucky Ducky</string>
+    <string name="game_subtitle">Test Your Luck!</string>
+
+    <!-- Questions -->
+    <string name="q1_text">Will the card be Red or Black?</string>
+    <string name="q2_text">Will the next card be Higher or Lower?</string>
+    <string name="q3_text">Will the next card be Inside or Outside?</string>
+    <string name="q4_text">What suit will the card be?</string>
+    <string name="q5_text">Will the card value be Odd or Even?</string>
+    <string name="q6_text">Will it be a Face card or Number card?</string>
+    <string name="q7_text">What rank will the card be?</string>
+
+    <!-- Buttons -->
+    <string name="play_game">Play Game</string>
+    <string name="view_stats">View Statistics</string>
+    <string name="view_history">View History</string>
+    <string name="logout">Logout</string>
+
+    <!-- Messages -->
+    <string name="welcome_back">Welcome back!</string>
+    <string name="login_success">Login successful!</string>
+    <string name="logout_success">Logged out successfully</string>
+    <string name="game_saved">Game saved!</string>
 </resources>

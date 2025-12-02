@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    android:layout_marginBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvQuestionDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Q1: Red or Black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvAnswerDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your answer: Red"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="2dp"/>
+
+        <TextView
+            android:id="@+id/tvCardDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Card drawn: 3 of Hearts"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvResultDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="✓ Correct"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="#4CAF50"/>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

@@ -2,17 +2,16 @@ package com.project.luckyducky.main;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseUser;
 import com.project.luckyducky.R;
 import com.project.luckyducky.auth.AuthManager;
 import com.project.luckyducky.auth.LoginActivity;
@@ -20,115 +19,164 @@ import com.project.luckyducky.data.FirestoreService;
 import com.project.luckyducky.data.Models.Stats;
 import com.project.luckyducky.data.Models.User;
 import com.project.luckyducky.game.GameActivity;
+import com.project.luckyducky.game.HistoryActivity;
+import com.project.luckyducky.game.StatsActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends com.project.luckyducky.BaseActivity {
 
     private AuthManager authManager;
     private FirestoreService firestoreService;
-
-    private ImageView imgUserAvatar;
-    private TextView tvUserName;
-    private TextView tvTotalGames;
-    private Button btnStartGame;
-    private Button btnViewStats;
-    private Button btnViewHistory;
-
     private User currentUser;
-    private Stats userStats;
+
+    private ImageView ivProfilePicture;
+    private TextView tvWelcome, tvUserName, tvTotalGames, tvBestScore, tvAccuracy;
+    private Button btnPlayGame, btnViewStats, btnViewHistory, btnLogout;
+    private ProgressBar progressBar;
+    private View layoutUserInfo, layoutQuickStats;
+
+    private boolean isNavigating = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Initialize managers
-        authManager = AuthManager.getInstance(this);
-        firestoreService = FirestoreService.getInstance();
+        initializeViews();
+        authManager = new AuthManager(this);
+        firestoreService = new FirestoreService();
 
-        // Setup action bar
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Lucky Ducky");
-            getSupportActionBar().setElevation(4);
-        }
+        checkUserAuthentication();
+    }
 
-        // Initialize views
-        initViews();
+    private void initializeViews() {
+        ivProfilePicture = findViewById(R.id.ivProfilePicture);
+        tvWelcome = findViewById(R.id.tvWelcome);
+        tvUserName = findViewById(R.id.tvUserName);
+        tvTotalGames = findViewById(R.id.tvTotalGames);
+        tvBestScore = findViewById(R.id.tvBestScore);
+        tvAccuracy = findViewById(R.id.tvAccuracy);
 
-        // Load user data
-        loadUserData();
+        btnPlayGame = findViewById(R.id.btnPlayGame);
+        btnViewStats = findViewById(R.id.btnViewStats);
+        btnViewHistory = findViewById(R.id.btnViewHistory);
+        btnLogout = findViewById(R.id.btnLogout);
 
-        // Setup click listeners
+        progressBar = findViewById(R.id.progressBar);
+        layoutUserInfo = findViewById(R.id.layoutUserInfo);
+        layoutQuickStats = findViewById(R.id.layoutQuickStats);
+
         setupClickListeners();
     }
 
-    private void initViews() {
-        imgUserAvatar = findViewById(R.id.imgUserAvatar);
-        tvUserName = findViewById(R.id.tvUserName);
-        tvTotalGames = findViewById(R.id.tvTotalGames);
-        btnStartGame = findViewById(R.id.btnStartGame);
-        btnViewStats = findViewById(R.id.btnViewStats);
-        btnViewHistory = findViewById(R.id.btnViewHistory);
+    private void setupClickListeners() {
+        btnPlayGame.setOnClickListener(v -> startGame());
+        btnViewStats.setOnClickListener(v -> viewStats());
+        btnViewHistory.setOnClickListener(v -> viewHistory());
+        btnLogout.setOnClickListener(v -> showLogoutDialog());
     }
 
-    private void loadUserData() {
-        currentUser = authManager.getCurrentUser();
+    private void checkUserAuthentication() {
+        FirebaseUser firebaseUser = authManager.getCurrentUser();
 
-        if (currentUser != null) {
-            // Display user info
-            tvUserName.setText(currentUser.getDisplayName());
+        if (firebaseUser == null) {
+            // User not logged in, go to login
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
 
-            // Load avatar
-            if (currentUser.getPhotoUrl() != null && !currentUser.getPhotoUrl().isEmpty()) {
-                Glide.with(this)
-                        .load(currentUser.getPhotoUrl())
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_lucky_ducky)
-                        .into(imgUserAvatar);
+        // Load user data
+        loadUserData(firebaseUser.getUid());
+    }
+
+    private void loadUserData(String userId) {
+        showLoading(true);
+
+        firestoreService.getUser(userId, new FirestoreService.OnUserLoadListener() {
+            @Override
+            public void onUserLoaded(User user) {
+                currentUser = user;
+                displayUserInfo(user);
+                loadQuickStats(userId);
             }
 
-            // Load stats
-            loadStats();
+            @Override
+            public void onFailure(Exception e) {
+                showLoading(false);
+                Toast.makeText(MainActivity.this,
+                        "Failed to load user data: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void displayUserInfo(User user) {
+        if (isFinishing() || isDestroyed()) {
+            // Nếu Activity đã bị hủy, không làm gì cả và thoát khỏi hàm
+            return;
+        }
+
+        if (user == null) return;
+
+        tvWelcome.setText("Welcome back!");
+        tvUserName.setText(user.getDisplayName() != null ?
+                user.getDisplayName() : "Player");
+
+        // Load profile picture
+        if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+            Glide.with(this)
+                    .load(user.getPhotoUrl())
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_person)
+                    .into(ivProfilePicture);
+        }
+
+        layoutUserInfo.setVisibility(View.VISIBLE);
+    }
+
+    private void loadQuickStats(String userId) {
+        firestoreService.getStats(userId, new FirestoreService.OnStatsLoadListener() {
+            @Override
+            public void onStatsLoaded(Stats stats) {
+                showLoading(false);
+                displayQuickStats(stats);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                showLoading(false);
+                // Show default stats on failure
+                layoutQuickStats.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void displayQuickStats(Stats stats) {
+        if (stats == null) {
+            layoutQuickStats.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        tvTotalGames.setText(String.valueOf(stats.getTotalGamesPlayed()));
+
+        // Calculate best score from current user
+        if (currentUser != null) {
+            tvBestScore.setText(currentUser.getBestScore() + "/7");
         } else {
-            // No user -> back to login
-            navigateToLogin();
+            tvBestScore.setText("0/7");
         }
+
+        // Display accuracy
+        double accuracy = stats.getAccuracyRate();
+        tvAccuracy.setText(String.format("%.1f%%", accuracy));
+
+        layoutQuickStats.setVisibility(View.VISIBLE);
     }
 
-    private void loadStats() {
-        String userId = authManager.getCurrentUserId();
-        if (userId != null) {
-            firestoreService.getStats(userId, new FirestoreService.OnDataLoadListener<Stats>() {
-                @Override
-                public void onSuccess(Stats stats) {
-                    userStats = stats;
-                    tvTotalGames.setText("Total played: " + stats.getTotalGames());
-                }
-
-                @Override
-                public void onFailure(String error) {
-                    Toast.makeText(MainActivity.this,
-                            "Error load stats: " + error,
-                            Toast.LENGTH_SHORT).show();
-                    // Create new stats if error
-                    userStats = new Stats(userId);
-                    tvTotalGames.setText("Total played: 0");
-                }
-            });
-        }
-    }
-
-    private void setupClickListeners() {
-        btnStartGame.setOnClickListener(v -> startGame());
-
-        btnViewStats.setOnClickListener(v -> {
-            Intent intent = new Intent(this, com.project.luckyducky.game.StatsActivity.class);
-            startActivity(intent);
-        });
-
-        btnViewHistory.setOnClickListener(v -> {
-            Intent intent = new Intent(this, com.project.luckyducky.game.HistoryActivity.class);
-            startActivity(intent);
-        });
+    private void showLoading(boolean show) {
+        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        layoutUserInfo.setVisibility(show ? View.GONE : View.VISIBLE);
+        layoutQuickStats.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
     private void startGame() {
@@ -136,52 +184,58 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    private void viewStats() {
+        Intent intent = new Intent(this, StatsActivity.class);
+        startActivity(intent);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_logout) {
-            showLogoutDialog();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    private void viewHistory() {
+        Intent intent = new Intent(this, HistoryActivity.class);
+        startActivity(intent);
     }
 
     private void showLogoutDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Logout")
-                .setMessage("Are you sure?")
-                .setPositiveButton("Logout", (dialog, which) -> logout())
-                .setNegativeButton("Cancel", null)
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (dialog, which) -> logout())
+                .setNegativeButton("No", null)
                 .show();
     }
 
     private void logout() {
-        authManager.signOut(() -> {
-            navigateToLogin();
-        });
-    }
+        progressBar.setVisibility(View.VISIBLE);
 
-    private void navigateToLogin() {
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        authManager.signOut(new AuthManager.OnSignOutListener() {
+            @Override
+            public void onSignOutSuccess() {
+                Toast.makeText(MainActivity.this,
+                        "Logged out successfully",
+                        Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            }
+
+            @Override
+            public void onSignOutFailure(Exception e) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(MainActivity.this,
+                        "Logout failed: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload stats when come back to GameActivity
-        if (authManager.getCurrentUserId() != null) {
-            loadStats();
+        // Refresh data when returning to MainActivity
+        FirebaseUser firebaseUser = authManager.getCurrentUser();
+        if (firebaseUser != null) {
+            loadUserData(firebaseUser.getUid());
         }
     }
 }

@@ -2,109 +2,92 @@ package com.project.luckyducky.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.firebase.auth.FirebaseUser;
 import com.project.luckyducky.R;
-import com.project.luckyducky.data.FirestoreService;
 import com.project.luckyducky.data.Models.User;
 import com.project.luckyducky.main.MainActivity;
 
-public class LoginActivity extends AppCompatActivity {
-
-    private static final String TAG = "LoginActivity";
+public class LoginActivity extends com.project.luckyducky.BaseActivity {
 
     private AuthManager authManager;
-    private FirestoreService firestoreService;
-
     private Button btnGoogleSignIn;
     private ProgressBar progressBar;
+    private TextView tvAppTitle, tvAppSubtitle;
+    private View layoutLoginContent;
 
-    // ActivityResultLauncher để handle Google Sign-In
-    private ActivityResultLauncher<Intent> googleSignInLauncher;
+    private ActivityResultLauncher<Intent> signInLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize managers
-        authManager = AuthManager.getInstance(this);
-        firestoreService = FirestoreService.getInstance();
+        initializeViews();
+        authManager = new AuthManager(this);
 
-        // Initialize views
-        btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
-        progressBar = findViewById(R.id.progressBar);
-
-        // Setup Google Sign-In launcher
-        setupGoogleSignInLauncher();
-
-        // Click listener
-        btnGoogleSignIn.setOnClickListener(v -> startGoogleSignIn());
+        // Setup Activity Result Launcher for Google Sign In
+        setupSignInLauncher();
+        setupClickListeners();
     }
 
-    private void setupGoogleSignInLauncher() {
-        googleSignInLauncher = registerForActivityResult(
+    private void initializeViews() {
+        btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
+        progressBar = findViewById(R.id.progressBar);
+        tvAppTitle = findViewById(R.id.tvAppTitle);
+        tvAppSubtitle = findViewById(R.id.tvAppSubtitle);
+        layoutLoginContent = findViewById(R.id.layoutLoginContent);
+    }
+
+    private void setupSignInLauncher() {
+        signInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK) {
                         Intent data = result.getData();
                         handleSignInResult(data);
                     } else {
-                        hideLoading();
-                        Toast.makeText(this, "Sign in failed", Toast.LENGTH_SHORT).show();
+                        showLoading(false);
+                        Toast.makeText(this, "Sign in cancelled", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
     }
 
+    private void setupClickListeners() {
+        btnGoogleSignIn.setOnClickListener(v -> startGoogleSignIn());
+    }
+
     private void startGoogleSignIn() {
-        showLoading();
-        Intent signInIntent = authManager.getGoogleSignInIntent();
-        googleSignInLauncher.launch(signInIntent);
+        showLoading(true);
+        Intent signInIntent = authManager.getSignInIntent();
+        signInLauncher.launch(signInIntent);
     }
 
     private void handleSignInResult(Intent data) {
-        authManager.handleSignInResult(data, new AuthManager.AuthCallback() {
+        authManager.handleSignInResult(data, new AuthManager.OnAuthCompleteListener() {
             @Override
             public void onSuccess(User user) {
-                Log.d(TAG, "Sign in success: " + user.getDisplayName());
-
-                // Lưu user vào Firestore
-                saveUserToFirestore(user);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                Log.e(TAG, "Sign in failed: " + error);
-                hideLoading();
-                Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private void saveUserToFirestore(User user) {
-        firestoreService.saveUser(user, new FirestoreService.OnCompleteListener() {
-            @Override
-            public void onSuccess() {
-                Log.d(TAG, "User saved to Firestore");
-                hideLoading();
+                showLoading(false);
+                Toast.makeText(LoginActivity.this,
+                        "Welcome, " + user.getDisplayName() + "!",
+                        Toast.LENGTH_SHORT).show();
                 navigateToMain();
             }
 
             @Override
-            public void onFailure(String error) {
-                Log.e(TAG, "Failed to save user: " + error);
-                // Vẫn cho vào app dù lưu Firestore thất bại
-                hideLoading();
-                navigateToMain();
+            public void onFailure(Exception e) {
+                showLoading(false);
+                Toast.makeText(LoginActivity.this,
+                        "Login failed: " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -116,13 +99,13 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    private void showLoading() {
-        progressBar.setVisibility(View.VISIBLE);
-        btnGoogleSignIn.setEnabled(false);
+    private void showLoading(boolean show) {
+        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        layoutLoginContent.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
-    private void hideLoading() {
-        progressBar.setVisibility(View.GONE);
-        btnGoogleSignIn.setEnabled(true);
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 }

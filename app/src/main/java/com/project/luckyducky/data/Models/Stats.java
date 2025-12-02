@@ -5,83 +5,146 @@ import java.util.Map;
 
 public class Stats {
     private String userId;
-    private int totalGames;
-    private Map<Integer, QuestionStats> questionStats;
+    private int totalGamesPlayed;
+    private int totalQuestionsAnswered;
+    private int totalCorrectAnswers;
+    private int totalWrongAnswers;
+    private Map<String, QuestionStats> questionStats;
 
-    public static class QuestionStats {
-        private int questionNumber;
-        private int correctCount;
-        private int incorrectCount;
-
-        public QuestionStats() {}
-
-        public QuestionStats(int questionNumber) {
-            this.questionNumber = questionNumber;
-            this.correctCount = 0;
-            this.incorrectCount = 0;
-        }
-
-        public void addCorrect() {correctCount++;}
-        public void addIncorrect() {incorrectCount++;}
-
-        public double getWinRate() {
-            int total = correctCount + incorrectCount;
-            return total == 0 ? 0 : (double) correctCount / total * 100;
-        }
-
-        // get-set QuestionStats
-        public int getQuestionNumber() {return questionNumber;}
-        public void setQuestionNumber(int questionNumber) {this.questionNumber = questionNumber;}
-
-        public int getCorrectCount() {return correctCount;}
-        public void setCorrectCount(int correctCount) {this.correctCount = correctCount;}
-
-        public int getIncorrectCount() {return incorrectCount;}
-        public void setIncorrectCount(int incorrectCount) {this.incorrectCount = incorrectCount;}
-    }
-
-    // constructor firestore
     public Stats() {
+        // Required empty constructor for Firestore
         this.questionStats = new HashMap<>();
     }
 
     public Stats(String userId) {
         this.userId = userId;
-        this.totalGames = 0;
+        this.totalGamesPlayed = 0;
+        this.totalQuestionsAnswered = 0;
+        this.totalCorrectAnswers = 0;
+        this.totalWrongAnswers = 0;
         this.questionStats = new HashMap<>();
 
-        for (int i = 1; i <= 8; i++) {
-            questionStats.put(i, new QuestionStats(i));
-        }
+        // Initialize stats for each question type
+        initializeQuestionStats();
     }
 
-    public void recordAnswer(int questionNumber, boolean isCorrect) {
-        QuestionStats qStats = questionStats.get(questionNumber);
-        if (qStats != null) {
-            if (isCorrect) {
-                qStats.addCorrect();
-            } else {
-                qStats.addIncorrect();
-            }
-        }
+    private void initializeQuestionStats() {
+        questionStats.put("q1_color", new QuestionStats("Color"));
+        questionStats.put("q2_higher_lower", new QuestionStats("Higher/Lower"));
+        questionStats.put("q3_inside_outside", new QuestionStats("Inside/Outside"));
+        questionStats.put("q4_suit", new QuestionStats("Suit"));
+        questionStats.put("q5_odd_even", new QuestionStats("Odd/Even"));
+        questionStats.put("q6_face_number", new QuestionStats("Face/Number"));
+        questionStats.put("q7_rank_prediction", new QuestionStats("Rank Prediction"));
     }
 
-    public void incrementTotalGames() {
-        totalGames++;
+    // Getters and Setters
+    public String getUserId() {
+        return userId;
     }
 
-    // get-set Stats
-    public String getUserId() {return userId;}
-    public void setUserId(String userId) {this.userId = userId;}
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
-    public int getTotalGames() {return totalGames;}
-    public void setTotalGames(int totalGames) {this.totalGames = totalGames;}
+    public int getTotalGamesPlayed() {
+        return totalGamesPlayed;
+    }
 
-    public Map<Integer, QuestionStats> getQuestionStats() {return questionStats;}
-    public void setQuestionStats(Map<Integer, QuestionStats> questionStats) {
+    public void setTotalGamesPlayed(int totalGamesPlayed) {
+        this.totalGamesPlayed = totalGamesPlayed;
+    }
+
+    public int getTotalQuestionsAnswered() {
+        return totalQuestionsAnswered;
+    }
+
+    public void setTotalQuestionsAnswered(int totalQuestionsAnswered) {
+        this.totalQuestionsAnswered = totalQuestionsAnswered;
+    }
+
+    public int getTotalCorrectAnswers() {
+        return totalCorrectAnswers;
+    }
+
+    public void setTotalCorrectAnswers(int totalCorrectAnswers) {
+        this.totalCorrectAnswers = totalCorrectAnswers;
+    }
+
+    public int getTotalWrongAnswers() {
+        return totalWrongAnswers;
+    }
+
+    public void setTotalWrongAnswers(int totalWrongAnswers) {
+        this.totalWrongAnswers = totalWrongAnswers;
+    }
+
+    public Map<String, QuestionStats> getQuestionStats() {
+        return questionStats;
+    }
+
+    public void setQuestionStats(Map<String, QuestionStats> questionStats) {
         this.questionStats = questionStats;
     }
-    public QuestionStats getQuestionStats(int questionNumber) {
-        return questionStats.get(questionNumber);
+
+    public double getAccuracyRate() {
+        if (totalQuestionsAnswered == 0) return 0.0;
+        return (double) totalCorrectAnswers / totalQuestionsAnswered * 100;
+    }
+
+    public static class QuestionStats {
+        private String questionName;
+        private int timesAnswered;
+        private int timesCorrect;
+        private int timesWrong;
+
+        public QuestionStats() {
+            // Required empty constructor
+        }
+
+        public QuestionStats(String questionName) {
+            this.questionName = questionName;
+            this.timesAnswered = 0;
+            this.timesCorrect = 0;
+            this.timesWrong = 0;
+        }
+
+        // Getters and Setters
+        public String getQuestionName() {
+            return questionName;
+        }
+
+        public void setQuestionName(String questionName) {
+            this.questionName = questionName;
+        }
+
+        public int getTimesAnswered() {
+            return timesAnswered;
+        }
+
+        public void setTimesAnswered(int timesAnswered) {
+            this.timesAnswered = timesAnswered;
+        }
+
+        public int getTimesCorrect() {
+            return timesCorrect;
+        }
+
+        public void setTimesCorrect(int timesCorrect) {
+            this.timesCorrect = timesCorrect;
+        }
+
+        public int getTimesWrong() {
+            return timesWrong;
+        }
+
+        public void setTimesWrong(int timesWrong) {
+            this.timesWrong = timesWrong;
+        }
+
+        public double getAccuracy() {
+            if (timesAnswered == 0) return 0.0;
+            return (double) timesCorrect / timesAnswered * 100;
+        }
     }
 }

@@ -1,98 +1,87 @@
 package com.project.luckyducky.game;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.project.luckyducky.R;
-import com.project.luckyducky.auth.AuthManager;
 import com.project.luckyducky.data.FirestoreService;
 import com.project.luckyducky.data.Models.Stats;
-import com.project.luckyducky.utils.Constants;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-public class StatsActivity extends AppCompatActivity {
+public class StatsActivity extends com.project.luckyducky.BaseActivity {
 
-    private AuthManager authManager;
     private FirestoreService firestoreService;
-
-    private ProgressBar progressBar;
-    private TextView tvTotalGames;
-    private LinearLayout llStatsContainer;
-
     private Stats userStats;
+
+    private TextView tvTotalGames, tvTotalQuestions, tvOverallAccuracy;
+    private TextView tvTotalCorrect, tvTotalWrong;
+    private LinearLayout llQuestionStats;
+    private ProgressBar progressBar;
+    private CardView cardOverallStats;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stats);
 
-        // Setup action bar
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Stats");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
-        // Initialize managers
-        authManager = AuthManager.getInstance(this);
-        firestoreService = FirestoreService.getInstance();
-
-        // Initialize views
-        initViews();
-
-        // Load stats
-        loadStats();
-
-        // Setup back press
-        setupBackPressHandler();
+        initializeViews();
+        firestoreService = new FirestoreService();
+        loadUserStats();
     }
 
-    private void initViews() {
-        progressBar = findViewById(R.id.progressBar);
+    private void initializeViews() {
         tvTotalGames = findViewById(R.id.tvTotalGames);
-        llStatsContainer = findViewById(R.id.llStatsContainer);
+        tvTotalQuestions = findViewById(R.id.tvTotalQuestions);
+        tvOverallAccuracy = findViewById(R.id.tvOverallAccuracy);
+        tvTotalCorrect = findViewById(R.id.tvTotalCorrect);
+        tvTotalWrong = findViewById(R.id.tvTotalWrong);
+        llQuestionStats = findViewById(R.id.llQuestionStats);
+        progressBar = findViewById(R.id.progressBar);
+        cardOverallStats = findViewById(R.id.cardOverallStats);
+
+        findViewById(R.id.btnResetStats).setOnClickListener(v -> showResetDialog());
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
-    private void setupBackPressHandler() {
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                finish();
-            }
-        });
-    }
-
-    private void loadStats() {
-        showLoading(true);
-
-        String userId = authManager.getCurrentUserId();
-        if (userId == null) {
-            Toast.makeText(this, "Not found user", Toast.LENGTH_SHORT).show();
+    private void loadUserStats() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        firestoreService.getStats(userId, new FirestoreService.OnDataLoadListener<Stats>() {
+        progressBar.setVisibility(View.VISIBLE);
+        cardOverallStats.setVisibility(View.GONE);
+
+        firestoreService.getStats(user.getUid(), new FirestoreService.OnStatsLoadListener() {
             @Override
-            public void onSuccess(Stats stats) {
+            public void onStatsLoaded(Stats stats) {
+                progressBar.setVisibility(View.GONE);
+                cardOverallStats.setVisibility(View.VISIBLE);
                 userStats = stats;
                 displayStats();
-                showLoading(false);
             }
 
             @Override
-            public void onFailure(String error) {
+            public void onFailure(Exception e) {
+                progressBar.setVisibility(View.GONE);
                 Toast.makeText(StatsActivity.this,
-                        "Error load stats: " + error,
+                        "Failed to load stats: " + e.getMessage(),
                         Toast.LENGTH_SHORT).show();
-                showLoading(false);
-                finish();
             }
         });
     }
@@ -100,149 +89,100 @@ public class StatsActivity extends AppCompatActivity {
     private void displayStats() {
         if (userStats == null) return;
 
-        // Display total games
-        tvTotalGames.setText(String.format("Total played: %d", userStats.getTotalGames()));
+        DecimalFormat df = new DecimalFormat("#.#");
 
-        // Clear previous stats
-        llStatsContainer.removeAllViews();
+        // Display overall stats
+        tvTotalGames.setText(String.valueOf(userStats.getTotalGamesPlayed()));
+        tvTotalQuestions.setText(String.valueOf(userStats.getTotalQuestionsAnswered()));
+        tvOverallAccuracy.setText(df.format(userStats.getAccuracyRate()) + "%");
+        tvTotalCorrect.setText("✓ " + userStats.getTotalCorrectAnswers());
+        tvTotalWrong.setText("✗ " + userStats.getTotalWrongAnswers());
 
-        // Display stats for each question
-        for (int i = 1; i <= Constants.TOTAL_QUESTIONS; i++) {
-            Stats.QuestionStats qStats = userStats.getQuestionStats(i);
-            if (qStats != null) {
-                CardView statCard = createStatCard(qStats);
-                llStatsContainer.addView(statCard);
-            }
+        // Display per-question stats
+        displayQuestionStats();
+    }
+
+    private void displayQuestionStats() {
+        llQuestionStats.removeAllViews();
+
+        Map<String, Stats.QuestionStats> questionStatsMap = userStats.getQuestionStats();
+
+        // Sort questions by key (q1, q2, q3, etc.)
+        List<String> sortedKeys = new ArrayList<>(questionStatsMap.keySet());
+        Collections.sort(sortedKeys);
+
+        for (String key : sortedKeys) {
+            Stats.QuestionStats qStats = questionStatsMap.get(key);
+            addQuestionStatView(qStats);
         }
     }
 
-    private CardView createStatCard(Stats.QuestionStats qStats) {
-        // Create CardView
-        CardView cardView = new CardView(this);
-        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        cardParams.setMargins(0, 0, 0, 24);
-        cardView.setLayoutParams(cardParams);
-        cardView.setRadius(16);
-        cardView.setCardElevation(4);
-        cardView.setContentPadding(24, 24, 24, 24);
+    private void addQuestionStatView(Stats.QuestionStats qStats) {
+        View itemView = LayoutInflater.from(this)
+                .inflate(R.layout.item_question_stat, llQuestionStats, false);
 
-        // Create content layout
-        LinearLayout contentLayout = new LinearLayout(this);
-        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        TextView tvQuestionName = itemView.findViewById(R.id.tvQuestionName);
+        TextView tvAccuracy = itemView.findViewById(R.id.tvAccuracy);
+        TextView tvCorrectWrong = itemView.findViewById(R.id.tvCorrectWrong);
+        ProgressBar progressBar = itemView.findViewById(R.id.progressAccuracy);
 
-        // Question title
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText(String.format("Question %d: %s",
-                qStats.getQuestionNumber(),
-                Constants.QUESTIONS[qStats.getQuestionNumber() - 1]));
-        tvTitle.setTextSize(16);
-        tvTitle.setTextColor(getResources().getColor(R.color.text_primary));
-        tvTitle.getPaint().setFakeBoldText(true);
-        tvTitle.setPadding(0, 0, 0, 16);
-        contentLayout.addView(tvTitle);
+        tvQuestionName.setText(qStats.getQuestionName());
 
-        // Stats row layout
-        LinearLayout statsRow = new LinearLayout(this);
-        statsRow.setOrientation(LinearLayout.HORIZONTAL);
-        statsRow.setWeightSum(3);
+        DecimalFormat df = new DecimalFormat("#.#");
+        double accuracy = qStats.getAccuracy();
+        tvAccuracy.setText(df.format(accuracy) + "%");
 
-        // Correct count
-        LinearLayout correctLayout = createStatItem(
-                "Correct",
-                String.valueOf(qStats.getCorrectCount()),
-                R.color.success
-        );
-        statsRow.addView(correctLayout);
+        tvCorrectWrong.setText("✓ " + qStats.getTimesCorrect() +
+                "  ✗ " + qStats.getTimesWrong());
 
-        // Incorrect count
-        LinearLayout incorrectLayout = createStatItem(
-                "Wrong",
-                String.valueOf(qStats.getIncorrectCount()),
-                R.color.error
-        );
-        statsRow.addView(incorrectLayout);
+        progressBar.setProgress((int) accuracy);
 
-        // Win rate
-        LinearLayout winRateLayout = createStatItem(
-                "Ratio",
-                String.format("%.0f%%", qStats.getWinRate()),
-                R.color.primary
-        );
-        statsRow.addView(winRateLayout);
-
-        contentLayout.addView(statsRow);
-
-        // Progress bar
-        ProgressBar progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                24
-        );
-        progressParams.setMargins(0, 16, 0, 0);
-        progressBar.setLayoutParams(progressParams);
-        progressBar.setMax(100);
-        progressBar.setProgress((int) qStats.getWinRate());
-        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(
-                getResources().getColor(getProgressColor(qStats.getWinRate()))));
-        contentLayout.addView(progressBar);
-
-        cardView.addView(contentLayout);
-        return cardView;
-    }
-
-    private LinearLayout createStatItem(String label, String value, int colorRes) {
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(android.view.Gravity.CENTER);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1
-        );
-        layout.setLayoutParams(params);
-
-        // Value
-        TextView tvValue = new TextView(this);
-        tvValue.setText(value);
-        tvValue.setTextSize(24);
-        tvValue.setTextColor(getResources().getColor(colorRes));
-        tvValue.getPaint().setFakeBoldText(true);
-        tvValue.setGravity(android.view.Gravity.CENTER);
-        layout.addView(tvValue);
-
-        // Label
-        TextView tvLabel = new TextView(this);
-        tvLabel.setText(label);
-        tvLabel.setTextSize(12);
-        tvLabel.setTextColor(getResources().getColor(R.color.text_secondary));
-        tvLabel.setGravity(android.view.Gravity.CENTER);
-        tvLabel.setPadding(0, 4, 0, 0);
-        layout.addView(tvLabel);
-
-        return layout;
-    }
-
-    private int getProgressColor(double winRate) {
-        if (winRate >= 70) {
-            return R.color.success;
-        } else if (winRate >= 50) {
-            return R.color.warning;
+        // Set color based on accuracy
+        int color;
+        if (accuracy >= 75) {
+            color = getResources().getColor(R.color.excellent_stat);
+        } else if (accuracy >= 50) {
+            color = getResources().getColor(R.color.good_stat);
         } else {
-            return R.color.error;
+            color = getResources().getColor(R.color.poor_stat);
         }
+        progressBar.getProgressDrawable().setColorFilter(
+                color, android.graphics.PorterDuff.Mode.SRC_IN);
+
+        llQuestionStats.addView(itemView);
     }
 
-    private void showLoading(boolean show) {
-        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
-        llStatsContainer.setVisibility(show ? View.GONE : View.VISIBLE);
+    private void showResetDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Reset Statistics")
+                .setMessage("Are you sure you want to reset all your statistics? This action cannot be undone.")
+                .setPositiveButton("Reset", (dialog, which) -> resetStats())
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
+    private void resetStats() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        progressBar.setVisibility(View.VISIBLE);
+
+        firestoreService.resetStats(user.getUid(), new FirestoreService.OnCompleteListener() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(StatsActivity.this,
+                        "Statistics reset successfully",
+                        Toast.LENGTH_SHORT).show();
+                loadUserStats();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(StatsActivity.this,
+                        "Failed to reset stats: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

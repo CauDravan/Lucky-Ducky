@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/main_background">
+    android:background="#1a472a"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,14 +12,24 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Result Header Card -->
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Game Results"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Score Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/primary"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -27,81 +38,139 @@
                 android:padding="24dp"
                 android:gravity="center">
 
-                <!-- Result Title -->
                 <TextView
-                    android:id="@+id/tvResultTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎉 Xuất sắc!"
-                    android:textSize="28sp"
+                    android:text="Final Score"
+                    android:textSize="18sp"
+                    android:textColor="@android:color/darker_gray"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvFinalScore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5/7"
+                    android:textSize="48sp"
                     android:textStyle="bold"
-                    android:textColor="@color/white"
-                    android:layout_marginBottom="12dp" />
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp"/>
 
-                <!-- Score -->
                 <TextView
-                    android:id="@+id/tvScore"
+                    android:id="@+id/tvAccuracy"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đúng 7/8 câu (87%)"
-                    android:textSize="20sp"
-                    android:textColor="@color/white"
-                    android:layout_marginBottom="8dp" />
+                    android:text="71.4%"
+                    android:textSize="24sp"
+                    android:textColor="#4CAF50"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
 
-                <!-- Card Info -->
-                <TextView
-                    android:id="@+id/tvCardInfo"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Lá bài: A♥"
-                    android:textSize="16sp"
-                    android:textColor="@color/white"
-                    android:alpha="0.9" />
+                    android:orientation="horizontal"
+                    android:gravity="center">
 
+                    <TextView
+                        android:id="@+id/tvCorrect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✓ Correct: 5"
+                        android:textSize="16sp"
+                        android:textColor="#4CAF50"
+                        android:layout_marginEnd="16dp"/>
+
+                    <TextView
+                        android:id="@+id/tvWrong"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✗ Wrong: 2"
+                        android:textSize="16sp"
+                        android:textColor="#F44336"/>
+                </LinearLayout>
             </LinearLayout>
-
         </androidx.cardview.widget.CardView>
 
-        <!-- Section Title -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Performance Message -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Detail each questions"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="12dp" />
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFF9C4"
+            android:layout_marginBottom="16dp">
 
-        <!-- Question Results Container -->
+            <TextView
+                android:id="@+id/tvPerformanceMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="👍 Good job! Pretty lucky today!"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:gravity="center"
+                android:padding="16dp"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Question Results Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Question Details"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Question Results List -->
         <LinearLayout
             android:id="@+id/llQuestionResults"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="24dp">
+            android:orientation="vertical">
 
-            <!-- Question result cards will be added here dynamically -->
-
+            <!-- Items will be added dynamically -->
         </LinearLayout>
 
         <!-- Action Buttons -->
-        <Button
-            android:id="@+id/btnPlayAgain"
-            style="@style/PrimaryButton"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Replay"
-            android:textSize="16sp"
-            android:layout_marginBottom="12dp" />
+            android:orientation="vertical"
+            android:layout_marginTop="24dp">
 
-        <Button
-            android:id="@+id/btnBackToMenu"
-            style="@style/SecondaryButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Menu"
-            android:textSize="16sp" />
+            <Button
+                android:id="@+id/btnPlayAgain"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Play Again"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:backgroundTint="#4CAF50"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"/>
+
+            <Button
+                android:id="@+id/btnViewStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View My Stats"
+                android:textSize="18sp"
+                android:backgroundTint="#2196F3"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"/>
+
+            <Button
+                android:id="@+id/btnBackHome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Back to Home"
+                android:textSize="18sp"
+                android:backgroundTint="#757575"
+                android:padding="16dp"/>
+        </LinearLayout>
 
     </LinearLayout>
-
 </ScrollView>

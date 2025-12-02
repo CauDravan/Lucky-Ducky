@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardHistory"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    android:foreground="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true">
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,56 +15,61 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header Row: Date and Percentage -->
+        <!-- Date and Score -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
 
-            <!-- Date -->
             <TextView
                 android:id="@+id/tvDate"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="27/11/2024 14:30"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
+                android:text="Jan 15, 2025 14:30"
+                android:textSize="14sp"
+                android:textColor="@android:color/darker_gray"/>
 
-            <!-- Percentage Badge -->
             <TextView
-                android:id="@+id/tvPercentage"
+                android:id="@+id/tvScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="75%"
-                android:textSize="18sp"
+                android:text="5/7"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="@color/success"
-                android:layout_marginStart="8dp" />
-
+                android:textColor="@android:color/black"/>
         </LinearLayout>
 
-        <!-- Card Info -->
+        <!-- Accuracy -->
         <TextView
-            android:id="@+id/tvCard"
+            android:id="@+id/tvAccuracy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Lá bài: A♥"
+            android:text="71.4%"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/card_red"
-            android:layout_marginTop="8dp" />
+            android:textColor="#4CAF50"
+            android:layout_marginBottom="8dp"/>
 
-        <!-- Score -->
+        <!-- Correct/Wrong -->
         <TextView
-            android:id="@+id/tvScore"
+            android:id="@+id/tvCorrectWrong"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Kết quả: 6/8 đúng"
+            android:text="✓ 5  ✗ 2"
             android:textSize="14sp"
-            android:textColor="@color/text_primary"
-            android:layout_marginTop="4dp" />
+            android:textColor="@android:color/darker_gray"/>
 
+        <!-- Tap for details hint -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap for details →"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="end"
+            android:layout_marginTop="4dp"
+            android:alpha="0.7"/>
     </LinearLayout>
-
 </androidx.cardview.widget.CardView>
