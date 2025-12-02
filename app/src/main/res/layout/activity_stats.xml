@@ -20,13 +20,15 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="24dp">
 
-            <Button
+            <ImageButton
                 android:id="@+id/btnBack"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="←"
-                android:textSize="24sp"
-                android:backgroundTint="#757575"/>
+                android:background="@drawable/btn_back"
+                android:src="@drawable/ic_arrow_back"
+                android:scaleType="centerInside"
+                android:padding="12dp"
+                android:contentDescription="Back"/>
 
             <TextView
                 android:layout_width="0dp"
